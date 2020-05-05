@@ -1,11 +1,14 @@
 ﻿using System;
 using System.Text;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using MqttHomeClient.Domain;
 using MqttHomeClient.Entities;
+using MqttHomeClient.Entities.Json;
 using MQTTnet;
 using MQTTnet.Client;
 using MQTTnet.Client.Options;
@@ -20,11 +23,19 @@ namespace MqttHomeClient.Service
         private readonly IHostApplicationLifetime _appLifetime;
         private readonly ILogger<MqttService> _logger;
 
-        public MqttService(IHostApplicationLifetime appLifetime, IOptions<MqttConfig> mqttConfig, ILogger<MqttService> logger)
+        private readonly WakeOnLanLogic _wolLogic;
+
+        public MqttService(
+            IHostApplicationLifetime appLifetime,
+            IOptions<MqttConfig> mqttConfig,
+            ILogger<MqttService> logger,
+            WakeOnLanLogic wolLogic)
         {
             var mqttFactory = new MqttFactory();
             _mqttClient = mqttFactory.CreateMqttClient();
             _mqttConfig = mqttConfig.Value;
+
+            _wolLogic = wolLogic;
 
             _logger = logger;
 
@@ -48,26 +59,24 @@ namespace MqttHomeClient.Service
         private async void OnStarted()
         {
             //受信時の処理
-            _mqttClient.UseApplicationMessageReceivedHandler(eventArgs =>
+            _mqttClient.UseApplicationMessageReceivedHandler(async eventArgs =>
             {
                 try
                 {
                     var topic = eventArgs.ApplicationMessage.Topic;
                     var payload = Encoding.UTF8.GetString(eventArgs.ApplicationMessage.Payload, 0, eventArgs.ApplicationMessage.Payload.Length);
 
-                    _logger.LogInformation($"topic:{topic}");
-                    _logger.LogInformation($"payload:{payload}");
 
-                    if (topic.Equals($"{_mqttConfig.Channel}/topic1", StringComparison.OrdinalIgnoreCase))
+                    if (topic.Equals($"{_mqttConfig.Channel}/WakeOnLAN", StringComparison.OrdinalIgnoreCase))
                     {
-                        _logger.LogInformation($"topic:{topic}/topic1");
-                        _logger.LogInformation($"payload:{payload}");
+                        var json = JsonSerializer.Deserialize<MqttResponse>(payload);
+
+                        await _wolLogic.ExecWol(json.Data);
                     }
                 }
                 catch (Exception e)
                 {
                     _logger.LogError(e.Message);
-                    _appLifetime.StopApplication();
                 }
             });
 
