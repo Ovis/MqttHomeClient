@@ -21,7 +21,7 @@ namespace MqttHomeClient.Domain
 
             if (!Directory.Exists(path)) return plugins;
 
-            var availableDllList = Directory.GetFiles(path, "*.dll").Select(s => Path.GetFullPath(s)).ToArray();
+            var availableDllList = Directory.GetFiles(path, "*.dll").Select(Path.GetFullPath).ToArray();
 
             var pluginTypes = new List<Type>();
 
