@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
@@ -12,6 +13,7 @@ using MqttHomeClient.Entities.Json;
 using MQTTnet;
 using MQTTnet.Client;
 using MQTTnet.Client.Options;
+using PluginInterface;
 
 namespace MqttHomeClient.Service
 {
@@ -24,6 +26,8 @@ namespace MqttHomeClient.Service
         private readonly ILogger<MqttService> _logger;
 
         private readonly WakeOnLanLogic _wolLogic;
+
+        private readonly List<IPlugin> _plugins;
 
         public MqttService(
             IHostApplicationLifetime appLifetime,
@@ -40,6 +44,8 @@ namespace MqttHomeClient.Service
             _logger = logger;
 
             _appLifetime = appLifetime;
+
+            _plugins = LoadPlugin.LoadPlugins();
 
         }
 
@@ -58,6 +64,8 @@ namespace MqttHomeClient.Service
 
         private async void OnStarted()
         {
+
+
             //受信時の処理
             _mqttClient.UseApplicationMessageReceivedHandler(async eventArgs =>
             {
@@ -66,12 +74,20 @@ namespace MqttHomeClient.Service
                     var topic = eventArgs.ApplicationMessage.Topic;
                     var payload = Encoding.UTF8.GetString(eventArgs.ApplicationMessage.Payload, 0, eventArgs.ApplicationMessage.Payload.Length);
 
-
-                    if (topic.Equals($"{_mqttConfig.Channel}/WakeOnLAN", StringComparison.OrdinalIgnoreCase))
+                    foreach (var plugin in _plugins)
                     {
-                        var json = JsonSerializer.Deserialize<MqttResponse>(payload);
+                        if (topic.Equals($"{_mqttConfig.Channel}/{plugin.Topic}", StringComparison.OrdinalIgnoreCase))
+                        {
+                            var json = JsonSerializer.Deserialize<MqttResponse>(payload);
 
-                        await _wolLogic.ExecWol(json.Data);
+                            var result = await plugin.ActionAsync(json.Data);
+
+                            if (result == false)
+                            {
+                                _logger.LogWarning($"トピック{topic}の処理中、{plugin.PluginName}プラグインの内部で異常が発生しました。");
+                            }
+                            break;
+                        }
                     }
                 }
                 catch (Exception e)
