@@ -3,7 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.30011.22
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MqttHomeClient", "MqttHomeClient\MqttHomeClient.csproj", "{382EF7D6-D861-4BA6-B006-C60997535364}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MqttHomeClient", "MqttHomeClient\MqttHomeClient.csproj", "{382EF7D6-D861-4BA6-B006-C60997535364}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PluginInterface", "PluginInterface\PluginInterface.csproj", "{58AB9C2C-5E87-4874-B343-4F25180F5054}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WakeOnLAN", "WakeOnLAN\WakeOnLAN.csproj", "{FBD7E6B0-342A-4252-A141-7515A3108DFE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +19,14 @@ Global
 		{382EF7D6-D861-4BA6-B006-C60997535364}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{382EF7D6-D861-4BA6-B006-C60997535364}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{382EF7D6-D861-4BA6-B006-C60997535364}.Release|Any CPU.Build.0 = Release|Any CPU
+		{58AB9C2C-5E87-4874-B343-4F25180F5054}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{58AB9C2C-5E87-4874-B343-4F25180F5054}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{58AB9C2C-5E87-4874-B343-4F25180F5054}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{58AB9C2C-5E87-4874-B343-4F25180F5054}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FBD7E6B0-342A-4252-A141-7515A3108DFE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FBD7E6B0-342A-4252-A141-7515A3108DFE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FBD7E6B0-342A-4252-A141-7515A3108DFE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FBD7E6B0-342A-4252-A141-7515A3108DFE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
