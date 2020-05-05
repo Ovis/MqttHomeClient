@@ -25,21 +25,16 @@ namespace MqttHomeClient.Service
         private readonly IHostApplicationLifetime _appLifetime;
         private readonly ILogger<MqttService> _logger;
 
-        private readonly WakeOnLanLogic _wolLogic;
-
         private readonly List<IPlugin> _plugins;
 
         public MqttService(
             IHostApplicationLifetime appLifetime,
             IOptions<MqttConfig> mqttConfig,
-            ILogger<MqttService> logger,
-            WakeOnLanLogic wolLogic)
+            ILogger<MqttService> logger)
         {
             var mqttFactory = new MqttFactory();
             _mqttClient = mqttFactory.CreateMqttClient();
             _mqttConfig = mqttConfig.Value;
-
-            _wolLogic = wolLogic;
 
             _logger = logger;
 

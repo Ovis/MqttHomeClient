@@ -21,9 +21,7 @@ namespace WakeOnLAN
 
         public async Task<bool> ActionAsync(string text)
         {
-            var result = await ExecWol(text);
-
-            return true;
+            return await ExecWol(text);
         }
 
         public async Task<bool> ExecWol(string target)

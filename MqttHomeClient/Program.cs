@@ -4,7 +4,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using MqttHomeClient.Domain;
 using MqttHomeClient.Entities;
 using MqttHomeClient.Service;
 
@@ -32,7 +31,6 @@ namespace MqttHomeClient
                 {
                     services.Configure<MqttConfig>(hostContext.Configuration.GetSection("Mqtt"));
                     services.AddHostedService<MqttService>();
-                    services.AddSingleton<WakeOnLanLogic>();
                 })
                 .Build();
 
