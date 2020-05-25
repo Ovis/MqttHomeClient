@@ -14,11 +14,13 @@ using MQTTnet;
 using MQTTnet.Client;
 using MQTTnet.Client.Options;
 using PluginInterface;
+using ZLogger;
 
 namespace MqttHomeClient.Service
 {
     internal class MqttService : IHostedService
     {
+
         private readonly IMqttClient _mqttClient;
         private readonly MqttConfig _mqttConfig;
 
@@ -75,7 +77,16 @@ namespace MqttHomeClient.Service
                         {
                             var json = JsonSerializer.Deserialize<MqttResponse>(payload);
 
-                            var result = await plugin.ActionAsync(json.Data);
+                            bool result;
+                            if (plugin.IsAsync)
+                            {
+                                result = await plugin.ActionAsync(json.Data);
+                            }
+                            else
+                            {
+                                result = plugin.Action(json.Data);
+                            }
+
 
                             if (result == false)
                             {
@@ -111,6 +122,10 @@ namespace MqttHomeClient.Service
 
         private async void OnStopped()
         {
+            foreach (var plugin in _plugins)
+            {
+                plugin.QuitAction();
+            }
             await _mqttClient.DisconnectAsync();
         }
 
@@ -120,6 +135,7 @@ namespace MqttHomeClient.Service
         /// <returns></returns>
         public async Task Connect()
         {
+
             if (string.IsNullOrEmpty(_mqttConfig.BrokerHostname))
             {
                 throw new ArgumentNullException(nameof(MqttConfig.BrokerHostname));
@@ -149,11 +165,11 @@ namespace MqttHomeClient.Service
                 try
                 {
                     await _mqttClient.ConnectAsync(mqttClientOptions);
-                    _logger.LogInformation("Connected.");
+                    _logger.ZLogInformation("Connected.");
                 }
                 catch (Exception e)
                 {
-                    _logger.LogWarning($"接続失敗 {retry + 1}回目:{e.Message}");
+                    _logger.ZLogWarning($"接続失敗 {retry + 1}回目:{e.Message}");
                     await Task.Delay(TimeSpan.FromSeconds(1));
                 }
                 retry++;

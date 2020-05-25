@@ -1,9 +1,9 @@
-﻿using System;
+﻿using PluginInterface;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.Loader;
-using PluginInterface;
 
 namespace MqttHomeClient.Domain
 {
@@ -27,12 +27,21 @@ namespace MqttHomeClient.Domain
 
             foreach (var dll in availableDllList)
             {
-                var assembly = AssemblyLoadContext.Default.LoadFromAssemblyPath(dll);
+                try
+                {
+                    var assembly = AssemblyLoadContext.Default.LoadFromAssemblyPath(dll);
 
-                var types = assembly.GetTypes();
+                    var types = assembly.GetTypes();
 
-                //IPluginインターフェイスで実装されたプラグインのみをロード
-                pluginTypes.AddRange(types.Where(type => !type.IsInterface && !type.IsAbstract).Where(type => type.GetInterface(typeof(IPlugin).FullName!) != null));
+                    //IPluginインターフェイスで実装されたプラグインのみをロード
+                    pluginTypes.AddRange(types.Where(type => !type.IsInterface && !type.IsAbstract).Where(type => type.GetInterface(typeof(IPlugin).FullName!) != null));
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine($"This plugin is old. :{dll}");
+                    Console.WriteLine(e);
+                }
+
             }
 
             plugins.AddRange(pluginTypes.Select(pType => (IPlugin)Activator.CreateInstance(pType)));
