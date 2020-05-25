@@ -8,8 +8,12 @@ namespace PluginInterface
 
         string PluginName { get; }
 
+        bool IsAsync { get; }
+
         bool Action(string text);
 
         Task<bool> ActionAsync(string text);
+
+        bool QuitAction();
     }
 }

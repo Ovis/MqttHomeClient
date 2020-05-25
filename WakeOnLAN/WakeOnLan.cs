@@ -1,10 +1,10 @@
-﻿using System;
+﻿using PluginInterface;
+using System;
 using System.Globalization;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading.Tasks;
-using PluginInterface;
 
 namespace WakeOnLAN
 {
@@ -13,6 +13,8 @@ namespace WakeOnLAN
         public string Topic { get; } = "WakeOnLAN";
 
         public string PluginName { get; } = "WakeOnLAN";
+
+        public bool IsAsync => true;
 
         public bool Action(string text)
         {
@@ -44,6 +46,11 @@ namespace WakeOnLAN
                 return false;
             }
 
+            return true;
+        }
+
+        public bool QuitAction()
+        {
             return true;
         }
     }
