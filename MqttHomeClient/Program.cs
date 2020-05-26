@@ -1,11 +1,11 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using System.IO;
+using System.Threading.Tasks;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using MqttHomeClient.Entities;
 using MqttHomeClient.Service;
-using System.IO;
-using System.Threading.Tasks;
 using ZLogger;
 
 namespace MqttHomeClient
@@ -29,10 +29,17 @@ namespace MqttHomeClient
                     logging.SetMinimumLevel(LogLevel.Debug);
                     logging.AddZLoggerConsole();
                     logging.AddZLoggerFile("filename.log");
-                    logging.AddZLoggerRollingFile((dt, x) => $"logs/{dt.ToLocalTime():yyyy-MM-dd}_{x:000}.log", x => x.ToLocalTime().Date, 1024);
+                    logging.AddZLoggerRollingFile((dt, x) =>
+                            $"logs/{dt.ToLocalTime():yyyy-MM-dd}_{x:000}.log",
+                        x => x.ToLocalTime().Date,
+                        1024,
+                        options =>
+                        {
+                            options.EnableStructuredLogging = true;
+                        });
                     logging.AddZLoggerConsole(options =>
                     {
-                        options.EnableStructuredLogging = true;
+                        options.EnableStructuredLogging = false;
                     });
                 })
                 .ConfigureServices((hostContext, services) =>
