@@ -3,17 +3,27 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.Loader;
+using Microsoft.Extensions.Logging;
 using PluginInterface;
+using ZLogger;
 
 namespace MqttHomeClient.Domain
 {
-    public static class LoadPlugin
+    public class LoadPlugin
     {
+        private readonly ILogger<LoadPlugin> _logger;
+
+        public LoadPlugin(ILogger<LoadPlugin> logger)
+        {
+            _logger = logger;
+        }
+
+
         /// <summary>
         /// プラグインをロード
         /// </summary>
         /// <returns></returns>
-        public static List<IPlugin> LoadPlugins()
+        public List<IPlugin> LoadPlugins()
         {
             var plugins = new List<IPlugin>();
 
@@ -38,8 +48,7 @@ namespace MqttHomeClient.Domain
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine($"This plugin is old. :{dll}");
-                    Console.WriteLine(e);
+                    _logger.ZLogError(e.Message);
                 }
 
             }
