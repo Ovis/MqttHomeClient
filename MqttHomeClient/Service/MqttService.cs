@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Text.Json;
@@ -135,19 +135,21 @@ namespace MqttHomeClient.Service
         /// <returns></returns>
         public async Task Connect()
         {
-
             if (string.IsNullOrEmpty(_mqttConfig.BrokerHostname))
             {
+                _logger.ZLogWarning("MQTTBrokerホスト名が未入力です。");
                 throw new ArgumentNullException(nameof(MqttConfig.BrokerHostname));
             }
 
             if (_mqttConfig.BrokerHostPort == 0)
             {
+                _logger.ZLogWarning("MQTTBrokerポート番号が適切ではありません。");
                 throw new ArgumentNullException(nameof(MqttConfig.BrokerHostPort));
             }
 
             if (string.IsNullOrEmpty(_mqttConfig.AccountId))
             {
+                _logger.ZLogWarning("MQTTBrokerアカウントIDが未入力です。");
                 throw new ArgumentNullException(nameof(MqttConfig.AccountId));
             }
 
@@ -165,7 +167,7 @@ namespace MqttHomeClient.Service
                 try
                 {
                     await _mqttClient.ConnectAsync(mqttClientOptions);
-                    _logger.ZLogInformation("Connected.");
+                    _logger.ZLogInformation("MQTT Connected.");
                 }
                 catch (Exception e)
                 {
