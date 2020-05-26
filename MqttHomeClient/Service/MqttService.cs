@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Text.Json;
@@ -105,7 +105,7 @@ namespace MqttHomeClient.Service
             _mqttClient.UseConnectedHandler(async eventArgs =>
             {
                 //指定チャンネルの全Topicを購読
-                _ = await _mqttClient.SubscribeAsync(new TopicFilterBuilder()
+                _ = await _mqttClient.SubscribeAsync(new MqttTopicFilterBuilder()
                      .WithTopic($"{_mqttConfig.Channel}/#")
                      .Build());
             });
