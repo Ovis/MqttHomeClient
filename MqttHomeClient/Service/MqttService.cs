@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Text.Json;
@@ -23,6 +23,7 @@ namespace MqttHomeClient.Service
 
         private readonly IMqttClient _mqttClient;
         private readonly MqttConfig _mqttConfig;
+        private readonly LoadPlugin _loadPlugin;
 
         private readonly IHostApplicationLifetime _appLifetime;
         private readonly ILogger<MqttService> _logger;
@@ -31,6 +32,7 @@ namespace MqttHomeClient.Service
 
         public MqttService(
             IHostApplicationLifetime appLifetime,
+            LoadPlugin loadPlugin,
             IOptions<MqttConfig> mqttConfig,
             ILogger<MqttService> logger)
         {
@@ -38,11 +40,13 @@ namespace MqttHomeClient.Service
             _mqttClient = mqttFactory.CreateMqttClient();
             _mqttConfig = mqttConfig.Value;
 
+            _loadPlugin = loadPlugin;
+
             _logger = logger;
 
             _appLifetime = appLifetime;
 
-            _plugins = LoadPlugin.LoadPlugins();
+            _plugins = _loadPlugin.LoadPlugins();
 
         }
 
