@@ -75,23 +75,14 @@ namespace MqttHomeClient.Service
                     {
                         if (topic.Equals($"{_mqttConfig.Channel}/{plugin.Topic}", StringComparison.OrdinalIgnoreCase))
                         {
+                            _logger.ZLogInformation($"Topic:{topic} Start");
+
                             var json = JsonSerializer.Deserialize<MqttResponse>(payload);
 
-                            bool result;
-                            if (plugin.IsAsync)
-                            {
-                                result = await plugin.ActionAsync(json.Data);
-                            }
-                            else
-                            {
-                                result = plugin.Action(json.Data);
-                            }
+                            await PluginProc(plugin, json.Data);
 
 
-                            if (result == false)
-                            {
-                                _logger.LogWarning($"トピック{topic}の処理中、{plugin.PluginName}プラグインの内部で異常が発生しました。");
-                            }
+                            _logger.ZLogInformation($"Topic:{topic} End");
                             break;
                         }
                     }
@@ -175,6 +166,29 @@ namespace MqttHomeClient.Service
                     await Task.Delay(TimeSpan.FromSeconds(1));
                 }
                 retry++;
+            }
+        }
+
+        public async Task PluginProc(IPlugin plugin, string msg)
+        {
+            var result = await plugin.ActionAsync(msg);
+
+            switch (result.Status)
+            {
+                case ResultStatus.SuccessOnApp:
+                    break;
+                case ResultStatus.SuccessOnAppHasMessage:
+                    _logger.ZLogInformation(result.Message);
+                    break;
+                case ResultStatus.FailedOnApp:
+                    _logger.ZLogWarning(result.Message);
+                    break;
+                case ResultStatus.ErrorOnSystem:
+                    _logger.ZLogError(result.Message);
+                    _logger.ZLogError(result.StackTrace);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
             }
         }
     }

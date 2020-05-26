@@ -1,10 +1,10 @@
-﻿using PluginInterface;
-using PostTracking.Domain;
-using PostTracking.Entities;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using PluginInterface;
+using PostTracking.Domain;
+using PostTracking.Entities;
 
 namespace PostTracking
 {
@@ -23,7 +23,7 @@ namespace PostTracking
         private Config _config;
 
 
-        public bool Action(string inquiryNumber)
+        public async Task<Result> ActionAsync(string inquiryNumber)
         {
             _track ??= new Tracking();
 
@@ -34,7 +34,11 @@ namespace PostTracking
 
                 if (_config == null)
                 {
-                    Console.WriteLine("PostTrackingのコンフィグファイル読み込みに失敗しました。");
+                    return new Result
+                    {
+                        Status = ResultStatus.FailedOnApp,
+                        Message = $"PostTrackingのコンフィグファイル読み込みに失敗しました。"
+                    };
                 }
             }
 
@@ -42,16 +46,11 @@ namespace PostTracking
 
             _timerList.Add(trackTime);
 
-            Console.WriteLine($"配送番号{inquiryNumber}の配送監視を設定しました。");
-            Console.WriteLine(_config.WebHookUrl);
-
-            return false;
-        }
-
-
-        public Task<bool> ActionAsync(string text)
-        {
-            throw new NotImplementedException();
+            return new Result
+            {
+                Status = ResultStatus.SuccessOnAppHasMessage,
+                Message = $"配送番号{inquiryNumber}の配送監視を設定しました。"
+            };
         }
 
         /// <summary>
