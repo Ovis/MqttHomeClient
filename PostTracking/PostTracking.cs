@@ -67,7 +67,7 @@ namespace PostTracking
 
             if (isFinish || DateTime.UtcNow > tracking.SetDate.AddDays(5))
             {
-                await _track.PostWebHook(_config.WebHookUrl, finishDate);
+                await _track.PostWebHook(_config.WebHookUrl, tracking.InquiryNumber, finishDate);
                 Console.Write("お届け済みのため終了しました。");
 
                 tracking.Timer.Stop();
