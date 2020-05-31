@@ -63,17 +63,30 @@ namespace PostTracking
 
             if (tracking == null) return;
 
-            var (isFinish, finishDate) = await _track.CheckPost(tracking.InquiryNumber);
-
-            if (isFinish)
+            //夜中は配達されるはずがないので、日本時間の午前8時から午後9時までの間のみ確認を行う
             {
-                var message = $"追跡番号{tracking.InquiryNumber}の荷物は{finishDate}に配達が完了しました。";
-                await _track.PostWebHook(_config.WebHookUrl, message);
-                Console.Write("お届け済みのため終了しました。");
+                //現在の日本時間
+                var nowTimeOfDay = DateTime.UtcNow.AddHours(9).TimeOfDay;
 
-                tracking.Timer.Stop();
+                if (new TimeSpan(8, 0, 0) <= nowTimeOfDay && nowTimeOfDay <= new TimeSpan(21, 0, 0))
+                {
+                    var (isFinish, finishDate) = await _track.CheckPost(tracking.InquiryNumber);
+
+                    if (isFinish)
+                    {
+                        var message = $"追跡番号{tracking.InquiryNumber}の荷物は{finishDate}に配達が完了しました。";
+                        await _track.PostWebHook(_config.WebHookUrl, message);
+                        Console.Write("お届け済みのため終了しました。");
+
+                        tracking.Timer.Stop();
+
+                        return;
+                    }
+                }
             }
-            else if (DateTime.UtcNow > tracking.SetDate.AddDays(5))
+
+
+            if (DateTime.UtcNow > tracking.SetDate.AddDays(5))
             {
                 var message = $"追跡番号{tracking.InquiryNumber}の荷物は所定時間を経過しても配送完了にならないため、監視を終了しました。";
                 await _track.PostWebHook(_config.WebHookUrl, message);
