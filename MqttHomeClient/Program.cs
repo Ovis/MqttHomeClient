@@ -4,8 +4,10 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using MqttHomeClient.Domain;
 using MqttHomeClient.Entities;
 using MqttHomeClient.Service;
+using ZLogger;
 
 namespace MqttHomeClient
 {
@@ -24,13 +26,27 @@ namespace MqttHomeClient
                 })
                 .ConfigureLogging(logging =>
                 {
+                    logging.ClearProviders();
                     logging.SetMinimumLevel(LogLevel.Debug);
-                    logging.AddConsole();
+                    logging.AddZLoggerFile("filename.log");
+                    logging.AddZLoggerRollingFile((dt, x) =>
+                            $"logs/{dt.ToLocalTime():yyyy-MM-dd}_{x:000}.log",
+                        x => x.ToLocalTime().Date,
+                        1024,
+                        options =>
+                        {
+                            options.EnableStructuredLogging = true;
+                        });
+                    logging.AddZLoggerConsole(options =>
+                    {
+                        options.EnableStructuredLogging = false;
+                    });
                 })
                 .ConfigureServices((hostContext, services) =>
                 {
                     services.Configure<MqttConfig>(hostContext.Configuration.GetSection("Mqtt"));
                     services.AddHostedService<MqttService>();
+                    services.AddSingleton<LoadPlugin>();
                 })
                 .Build();
 

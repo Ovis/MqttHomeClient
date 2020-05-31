@@ -14,13 +14,16 @@ using MQTTnet;
 using MQTTnet.Client;
 using MQTTnet.Client.Options;
 using PluginInterface;
+using ZLogger;
 
 namespace MqttHomeClient.Service
 {
     internal class MqttService : IHostedService
     {
+
         private readonly IMqttClient _mqttClient;
         private readonly MqttConfig _mqttConfig;
+        private readonly LoadPlugin _loadPlugin;
 
         private readonly IHostApplicationLifetime _appLifetime;
         private readonly ILogger<MqttService> _logger;
@@ -29,6 +32,7 @@ namespace MqttHomeClient.Service
 
         public MqttService(
             IHostApplicationLifetime appLifetime,
+            LoadPlugin loadPlugin,
             IOptions<MqttConfig> mqttConfig,
             ILogger<MqttService> logger)
         {
@@ -36,11 +40,13 @@ namespace MqttHomeClient.Service
             _mqttClient = mqttFactory.CreateMqttClient();
             _mqttConfig = mqttConfig.Value;
 
+            _loadPlugin = loadPlugin;
+
             _logger = logger;
 
             _appLifetime = appLifetime;
 
-            _plugins = LoadPlugin.LoadPlugins();
+            _plugins = _loadPlugin.LoadPlugins();
 
         }
 
@@ -73,14 +79,14 @@ namespace MqttHomeClient.Service
                     {
                         if (topic.Equals($"{_mqttConfig.Channel}/{plugin.Topic}", StringComparison.OrdinalIgnoreCase))
                         {
+                            _logger.ZLogInformation($"Topic:{topic} Start");
+
                             var json = JsonSerializer.Deserialize<MqttResponse>(payload);
 
-                            var result = await plugin.ActionAsync(json.Data);
+                            await PluginProc(plugin, json.Data);
 
-                            if (result == false)
-                            {
-                                _logger.LogWarning($"トピック{topic}の処理中、{plugin.PluginName}プラグインの内部で異常が発生しました。");
-                            }
+
+                            _logger.ZLogInformation($"Topic:{topic} End");
                             break;
                         }
                     }
@@ -94,7 +100,7 @@ namespace MqttHomeClient.Service
             _mqttClient.UseConnectedHandler(async eventArgs =>
             {
                 //指定チャンネルの全Topicを購読
-                _ = await _mqttClient.SubscribeAsync(new TopicFilterBuilder()
+                _ = await _mqttClient.SubscribeAsync(new MqttTopicFilterBuilder()
                      .WithTopic($"{_mqttConfig.Channel}/#")
                      .Build());
             });
@@ -111,6 +117,10 @@ namespace MqttHomeClient.Service
 
         private async void OnStopped()
         {
+            foreach (var plugin in _plugins)
+            {
+                plugin.QuitAction();
+            }
             await _mqttClient.DisconnectAsync();
         }
 
@@ -122,16 +132,19 @@ namespace MqttHomeClient.Service
         {
             if (string.IsNullOrEmpty(_mqttConfig.BrokerHostname))
             {
+                _logger.ZLogWarning("MQTTBrokerホスト名が未入力です。");
                 throw new ArgumentNullException(nameof(MqttConfig.BrokerHostname));
             }
 
             if (_mqttConfig.BrokerHostPort == 0)
             {
+                _logger.ZLogWarning("MQTTBrokerポート番号が適切ではありません。");
                 throw new ArgumentNullException(nameof(MqttConfig.BrokerHostPort));
             }
 
             if (string.IsNullOrEmpty(_mqttConfig.AccountId))
             {
+                _logger.ZLogWarning("MQTTBrokerアカウントIDが未入力です。");
                 throw new ArgumentNullException(nameof(MqttConfig.AccountId));
             }
 
@@ -149,14 +162,37 @@ namespace MqttHomeClient.Service
                 try
                 {
                     await _mqttClient.ConnectAsync(mqttClientOptions);
-                    _logger.LogInformation("Connected.");
+                    _logger.ZLogInformation("MQTT Connected.");
                 }
                 catch (Exception e)
                 {
-                    _logger.LogWarning($"接続失敗 {retry + 1}回目:{e.Message}");
+                    _logger.ZLogWarning($"接続失敗 {retry + 1}回目:{e.Message}");
                     await Task.Delay(TimeSpan.FromSeconds(1));
                 }
                 retry++;
+            }
+        }
+
+        public async Task PluginProc(IPlugin plugin, string msg)
+        {
+            var result = await plugin.ActionAsync(msg);
+
+            switch (result.Status)
+            {
+                case ResultStatus.SuccessOnApp:
+                    break;
+                case ResultStatus.SuccessOnAppHasMessage:
+                    _logger.ZLogInformation(result.Message);
+                    break;
+                case ResultStatus.FailedOnApp:
+                    _logger.ZLogWarning(result.Message);
+                    break;
+                case ResultStatus.ErrorOnSystem:
+                    _logger.ZLogError(result.Message);
+                    _logger.ZLogError(result.StackTrace);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
             }
         }
     }
