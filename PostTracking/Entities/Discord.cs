@@ -1,12 +1,12 @@
 ﻿using System;
-using System.Text.Json.Serialization;
+using Newtonsoft.Json;
 
 namespace PostTracking.Entities
 {
     [Serializable]
     sealed class Discord
     {
-        [JsonPropertyName("content")]
+        [JsonProperty("content")]
         public string Content { get; set; }
     }
 }

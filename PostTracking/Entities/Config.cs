@@ -1,5 +1,5 @@
 ﻿using System.IO;
-using System.Text.Json;
+using Newtonsoft.Json;
 
 namespace PostTracking.Entities
 {
@@ -16,7 +16,7 @@ namespace PostTracking.Entities
             {
                 var jsonString = File.ReadAllText(path);
 
-                return JsonSerializer.Deserialize<Config>(jsonString);
+                return JsonConvert.DeserializeObject<Config>(jsonString);
             }
             catch
             {

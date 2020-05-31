@@ -3,10 +3,10 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
-using System.Text.Json;
 using System.Threading.Tasks;
 using AngleSharp.Dom;
 using AngleSharp.Html.Parser;
+using Newtonsoft.Json;
 using PostTracking.Entities;
 
 namespace PostTracking.Domain
@@ -56,14 +56,14 @@ namespace PostTracking.Domain
         }
 
 
-        public async Task PostWebHook(string url, string inquiryNumber,string date)
+        public async Task PostWebHook(string url, string inquiryNumber, string date)
         {
             var jsonData = new Discord
             {
                 Content = $"追跡番号{inquiryNumber}の荷物は{date}に配達が完了しました。"
             };
 
-            var json = JsonSerializer.Serialize(jsonData);
+            var json = JsonConvert.SerializeObject(jsonData);
 
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
