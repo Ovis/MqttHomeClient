@@ -56,11 +56,11 @@ namespace PostTracking.Domain
         }
 
 
-        public async Task PostWebHook(string url, string inquiryNumber, string date)
+        public async Task PostWebHook(string url, string message)
         {
             var jsonData = new Discord
             {
-                Content = $"追跡番号{inquiryNumber}の荷物は{date}に配達が完了しました。"
+                Content = message
             };
 
             var json = JsonConvert.SerializeObject(jsonData);

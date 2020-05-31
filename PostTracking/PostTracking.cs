@@ -65,9 +65,18 @@ namespace PostTracking
 
             var (isFinish, finishDate) = await _track.CheckPost(tracking.InquiryNumber);
 
-            if (isFinish || DateTime.UtcNow > tracking.SetDate.AddDays(5))
+            if (isFinish)
             {
-                await _track.PostWebHook(_config.WebHookUrl, tracking.InquiryNumber, finishDate);
+                var message = $"追跡番号{tracking.InquiryNumber}の荷物は{finishDate}に配達が完了しました。";
+                await _track.PostWebHook(_config.WebHookUrl, message);
+                Console.Write("お届け済みのため終了しました。");
+
+                tracking.Timer.Stop();
+            }
+            else if (DateTime.UtcNow > tracking.SetDate.AddDays(5))
+            {
+                var message = $"追跡番号{tracking.InquiryNumber}の荷物は所定時間を経過しても配送完了にならないため、監視を終了しました。";
+                await _track.PostWebHook(_config.WebHookUrl, message);
                 Console.Write("お届け済みのため終了しました。");
 
                 tracking.Timer.Stop();
