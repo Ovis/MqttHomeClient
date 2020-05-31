@@ -61,37 +61,11 @@ namespace MqttHomeClient.Domain
 
             var availableDllList = Directory.GetFiles(path, "*.dll").Select(Path.GetFullPath).ToArray();
 
-            var pluginTypes = new List<Type>();
-
-
             return availableDllList.SelectMany(pluginPath =>
              {
                  Assembly pluginAssembly = LoadAllPlugin(pluginPath);
                  return CreateCommands(pluginAssembly);
              }).ToList();
-
-            //foreach (var dll in availableDllList)
-            //{
-            //    try
-            //    {
-            //        var loadContext = new PluginLoadContext(dll);
-            //        var assembly = loadContext.LoadFromAssemblyName(new AssemblyName(Path.GetFileNameWithoutExtension(dll)));
-
-            //        var types = assembly.GetTypes();
-
-            //        //IPluginインターフェイスで実装されたプラグインのみをロード
-            //        pluginTypes.AddRange(types.Where(type => !type.IsInterface && !type.IsAbstract).Where(type => type.GetInterface(typeof(IPlugin).FullName!) != null));
-            //    }
-            //    catch (Exception e)
-            //    {
-            //        _logger.ZLogError(e.Message);
-            //    }
-
-            //}
-
-            //plugins.AddRange(pluginTypes.Select(pType => (IPlugin)Activator.CreateInstance(pType)));
-
-            //return plugins;
 
         }
 
@@ -122,13 +96,7 @@ namespace MqttHomeClient.Domain
 
             if (count == 0)
             {
-                string availableTypes = string.Join(",", assembly.GetTypes().Select(t => t.FullName));
-
-
-
-                //throw new ApplicationException(
-                //    $"Can't find any type which implements ICommand in {assembly} from {assembly.Location}.\n" +
-                //    $"Available types: {availableTypes}");
+                _logger.ZLogWarning($"DLL read error. assembly:{assembly}");
             }
         }
     }
