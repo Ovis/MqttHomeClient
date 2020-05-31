@@ -15,7 +15,7 @@ namespace PostTracking.Entities
 
             Timer = new Timer
             {
-                Interval = 10000,
+                Interval = 120000,
                 AutoReset = true,
             };
 
