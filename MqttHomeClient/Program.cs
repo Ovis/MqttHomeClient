@@ -28,7 +28,6 @@ namespace MqttHomeClient
                 {
                     logging.ClearProviders();
                     logging.SetMinimumLevel(LogLevel.Debug);
-                    logging.AddZLoggerConsole();
                     logging.AddZLoggerFile("filename.log");
                     logging.AddZLoggerRollingFile((dt, x) =>
                             $"logs/{dt.ToLocalTime():yyyy-MM-dd}_{x:000}.log",
