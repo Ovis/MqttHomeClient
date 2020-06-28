@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Text.Json;
@@ -113,9 +113,13 @@ namespace MqttHomeClient.Service
                     _logger.ZLogWarning(eventArgs.Exception.StackTrace ?? string.Empty);
                 }
 
-                await Connect();
+                _logger.ZLogWarning("MQTTBrokerから切断されました。5秒後再接続します。");
+
                 await Task.Delay(TimeSpan.FromSeconds(5));
+
+                await _mqttClient.ReconnectAsync();
             });
+
 
             await Connect();
         }
