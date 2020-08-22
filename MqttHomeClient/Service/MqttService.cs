@@ -30,6 +30,8 @@ namespace MqttHomeClient.Service
 
         private readonly List<IPlugin> _plugins;
 
+        private int ReconnectNum { get; set; } = 0;
+
         public MqttService(
             IHostApplicationLifetime appLifetime,
             LoadPlugin loadPlugin,
@@ -117,7 +119,7 @@ namespace MqttHomeClient.Service
 
                 await Task.Delay(TimeSpan.FromSeconds(5));
 
-                await _mqttClient.ReconnectAsync();
+                await Connect();
             });
 
 
@@ -164,21 +166,26 @@ namespace MqttHomeClient.Service
                 .WithCleanSession()
                 .Build();
 
-            var retry = 0;
-
-            while (!_mqttClient.IsConnected && retry < 10)
+            while (!_mqttClient.IsConnected && ReconnectNum < 10)
             {
                 try
                 {
                     await _mqttClient.ConnectAsync(mqttClientOptions);
                     _logger.ZLogInformation("MQTT Connected.");
+                    ReconnectNum = 0;
                 }
                 catch (Exception e)
                 {
-                    _logger.ZLogWarning($"接続失敗 {retry + 1}回目:{e.Message}");
+                    _logger.ZLogWarning($"接続失敗 {ReconnectNum + 1}回目:{e.Message}");
                     await Task.Delay(TimeSpan.FromSeconds(1));
                 }
-                retry++;
+
+                if (ReconnectNum == 9)
+                {
+                    _logger.ZLogWarning($"接続失敗が連続したため終了します。");
+                    Environment.Exit(1);
+                }
+                ReconnectNum++;
             }
         }
 
