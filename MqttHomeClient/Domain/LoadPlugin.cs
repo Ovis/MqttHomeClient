@@ -6,7 +6,6 @@ using System.Reflection;
 using System.Runtime.Loader;
 using Microsoft.Extensions.Logging;
 using PluginInterface;
-using ZLogger;
 
 namespace MqttHomeClient.Domain
 {
@@ -59,20 +58,26 @@ namespace MqttHomeClient.Domain
 
             if (!Directory.Exists(path)) return plugins;
 
-            var availableDllList = Directory.GetFiles(path, "*.dll").Select(Path.GetFullPath).ToArray();
+            var pluginPaths = Directory.EnumerateDirectories(path, "*", SearchOption.AllDirectories);
 
-            return availableDllList.SelectMany(pluginPath =>
-             {
-                 Assembly pluginAssembly = LoadAllPlugin(pluginPath);
-                 return CreateCommands(pluginAssembly);
-             }).ToList();
+            foreach (var folder in pluginPaths)
+            {
+                var availableDllList = Directory.GetFiles(folder, "*.dll").Select(Path.GetFullPath).ToArray();
+
+                plugins.AddRange(availableDllList.SelectMany(pluginPath =>
+                {
+                    var pluginAssembly = LoadAllPlugin(pluginPath);
+                    return CreateCommands(pluginAssembly);
+                }).ToList());
+            }
+
+            return plugins;
 
         }
 
 
         private Assembly LoadAllPlugin(string pluginPath)
         {
-            Console.WriteLine($"Loading commands from: {pluginPath}");
             var loadContext = new PluginLoadContext(pluginPath);
             return loadContext.LoadFromAssemblyName(new AssemblyName(Path.GetFileNameWithoutExtension(pluginPath)));
         }
@@ -80,23 +85,14 @@ namespace MqttHomeClient.Domain
 
         private IEnumerable<IPlugin> CreateCommands(Assembly assembly)
         {
-            var count = 0;
-
             foreach (var type in assembly.GetTypes())
             {
-                if (typeof(IPlugin).IsAssignableFrom(type))
-                {
-                    if (Activator.CreateInstance(type) is IPlugin result)
-                    {
-                        count++;
-                        yield return result;
-                    }
-                }
-            }
+                if (!typeof(IPlugin).IsAssignableFrom(type)) continue;
 
-            if (count == 0)
-            {
-                _logger.ZLogWarning($"DLL read error. assembly:{assembly}");
+                if (!(Activator.CreateInstance(type) is IPlugin result)) continue;
+
+                Console.WriteLine($"Loading commands from: {assembly.FullName}");
+                yield return result;
             }
         }
     }
