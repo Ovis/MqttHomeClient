@@ -30,6 +30,8 @@ namespace MqttHomeClient.Service
 
         private readonly List<IPlugin> _plugins;
 
+        private int ReconnectNum { get; set; } = 0;
+
         public MqttService(
             IHostApplicationLifetime appLifetime,
             LoadPlugin loadPlugin,
@@ -93,7 +95,7 @@ namespace MqttHomeClient.Service
                 }
                 catch (Exception e)
                 {
-                    _logger.LogError(e.Message);
+                    _logger.ZLogError(e.Message);
                 }
             });
 
@@ -107,10 +109,19 @@ namespace MqttHomeClient.Service
 
             _mqttClient.UseDisconnectedHandler(async eventArgs =>
             {
-                _logger.LogWarning("MQTTBrokerから切断されました。再接続します。");
+                if (eventArgs.Exception != null)
+                {
+                    _logger.ZLogWarning(eventArgs.Exception.Message);
+                    _logger.ZLogWarning(eventArgs.Exception.StackTrace ?? string.Empty);
+                }
+
+                _logger.ZLogWarning("MQTTBrokerから切断されました。5秒後再接続します。");
+
+                await Task.Delay(TimeSpan.FromSeconds(5));
 
                 await Connect();
             });
+
 
             await Connect();
         }
@@ -155,21 +166,26 @@ namespace MqttHomeClient.Service
                 .WithCleanSession()
                 .Build();
 
-            var retry = 0;
-
-            while (!_mqttClient.IsConnected && retry < 10)
+            while (!_mqttClient.IsConnected && ReconnectNum < 10)
             {
                 try
                 {
                     await _mqttClient.ConnectAsync(mqttClientOptions);
                     _logger.ZLogInformation("MQTT Connected.");
+                    ReconnectNum = 0;
                 }
                 catch (Exception e)
                 {
-                    _logger.ZLogWarning($"接続失敗 {retry + 1}回目:{e.Message}");
+                    _logger.ZLogWarning($"接続失敗 {ReconnectNum + 1}回目:{e.Message}");
                     await Task.Delay(TimeSpan.FromSeconds(1));
                 }
-                retry++;
+
+                if (ReconnectNum == 9)
+                {
+                    _logger.ZLogWarning($"接続失敗が連続したため終了します。");
+                    Environment.Exit(1);
+                }
+                ReconnectNum++;
             }
         }
 

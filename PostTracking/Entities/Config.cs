@@ -10,7 +10,7 @@ namespace PostTracking.Entities
         public Config GetConfig()
         {
             var dic = Directory.GetCurrentDirectory();
-            var path = Path.Combine(dic, "Plugins", configFileName);
+            var path = Path.Combine(dic, "Plugins", "PostTracking", configFileName);
 
             try
             {
